@@ -4,7 +4,7 @@ description: >
   support (Farsi/Persian, Arabic, Pashto, Urdu, Hebrew and more), a
   searchable country code picker (bottom sheet or dialog, your choice),
   and every user-facing string editable at runtime.
-version: 0.1.0
+version: 1.0.0
 homepage: https://github.com/Brakzon/brakzon_phone_field
 publish_to: none
 
