@@ -10,3 +10,7 @@
 * RTL language support.
 * Localized digit support.
 * Phone number validation.
+
+## 1.0.1
+
+* bug fixed
