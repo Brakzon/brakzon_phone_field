@@ -19,8 +19,9 @@ class BrakzonNumber {
   String get digitsOnly =>
       normalizeToAsciiDigits(nationalNumber).replaceAll(RegExp(r'[^0-9]'), '');
 
-  /// E.164-ish concatenation: "+<dialCode><nationalNumber>", always in
-  /// plain ASCII digits regardless of which numerals are on screen.
+  /// E.164-ish concatenation in the form `+dialCode + nationalNumber`,
+  /// always using plain ASCII digits regardless of which numerals are shown
+  /// on screen.
   String get e164 => '+${country.dialCode}$digitsOnly';
 
   bool get isEmpty => nationalNumber.trim().isEmpty;

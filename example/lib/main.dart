@@ -24,8 +24,10 @@ class ExampleApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 18,
+          ),
         ),
       ),
       home: const ExampleHomePage(),
@@ -92,9 +94,7 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
                       children: [
                         Text(
                           'Language',
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelLarge
+                          style: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(color: scheme.primary),
                         ),
                         const SizedBox(height: 10),
@@ -124,9 +124,7 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
                         const SizedBox(height: 22),
                         Text(
                           'Country picker style',
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelLarge
+                          style: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(color: scheme.primary),
                         ),
                         const SizedBox(height: 10),
@@ -159,9 +157,7 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
                         children: [
                           Text(
                             'Your phone number',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 4),
@@ -169,9 +165,7 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
                             'The country picker always sits on the left and '
                             'the number always reads left-to-right — even '
                             'in Farsi, Arabic, or Pashto.',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: scheme.outline),
                           ),
                           const SizedBox(height: 18),
@@ -204,8 +198,9 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
                                       SnackBar(
                                         behavior: SnackBarBehavior.floating,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                         content: Text(
                                           '✅ Valid number: '
@@ -227,9 +222,7 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
                       'Try switching language + picker style above, then '
                       'submit again.',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
+                      style: Theme.of(context).textTheme.bodySmall
                           ?.copyWith(color: scheme.outline),
                     ),
                 ],
@@ -274,7 +267,11 @@ class _Header extends StatelessWidget {
               color: Colors.white.withOpacity(0.18),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.phone_iphone, color: Colors.white, size: 28),
+            child: const Icon(
+              Icons.phone_iphone,
+              color: Colors.white,
+              size: 28,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(

@@ -36,7 +36,7 @@ class Country {
   String get flagEmoji {
     final code = isoCode.toUpperCase();
     if (code.length != 2) return '🏳️';
-    final base = 0x1F1E6;
+    const base = 0x1F1E6;
     final first = base + (code.codeUnitAt(0) - 'A'.codeUnitAt(0));
     final second = base + (code.codeUnitAt(1) - 'A'.codeUnitAt(0));
     return String.fromCharCode(first) + String.fromCharCode(second);
@@ -71,7 +71,9 @@ class Country {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Country && other.isoCode == isoCode && other.dialCode == dialCode;
+      other is Country &&
+          other.isoCode == isoCode &&
+          other.dialCode == dialCode;
 
   @override
   int get hashCode => Object.hash(isoCode, dialCode);

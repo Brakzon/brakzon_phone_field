@@ -1,10 +1,6 @@
 name: brakzon_phone_field
-description: >
-  A fully customizable Flutter phone number form field with built-in RTL
-  support (Farsi/Persian, Arabic, Pashto, Urdu, Hebrew and more), a
-  searchable country code picker (bottom sheet or dialog, your choice),
-  and every user-facing string editable at runtime.
-version: 1.0.0
+description: Customizable Flutter phone number field with RTL support, searchable country picker, and editable strings for Farsi, Arabic, Pashto, Urdu, Hebrew, and more.
+version: 1.0.1
 homepage: https://github.com/Brakzon/brakzon_phone_field
 
 environment:
