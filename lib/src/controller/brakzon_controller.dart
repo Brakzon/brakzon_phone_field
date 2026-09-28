@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../models/countries.dart';
 import '../models/country.dart';
 import '../models/phone_number.dart';
+import '../utils/international_number_formatter.dart';
 
 /// Gives the caller full programmatic control over a [PhoneFormField]:
 /// read/change the selected country, read/change the typed number,
@@ -16,31 +17,80 @@ class BrakzonController extends ChangeNotifier {
   final TextEditingController textController;
   final List<Country> countries;
 
+  /// [initialNationalNumber] may also be a full international number such as
+  /// `+93712345678` or `0093712345678`: the country is then taken from the
+  /// dial code (overriding [initialCountry]) and only the national part
+  /// (`712345678`) is put in the text field.
   BrakzonController({
     Country? initialCountry,
     String? initialNationalNumber,
     List<Country>? countries,
-  })  : countries = countries ?? defaultCountries,
-        _country = initialCountry ??
-            (countries ?? defaultCountries).firstWhere(
-              (c) => c.isoCode == 'US',
-              orElse: () => (countries ?? defaultCountries).first,
-            ),
-        textController =
-            TextEditingController(text: initialNationalNumber ?? '') {
+  }) : this._(
+          countries ?? defaultCountries,
+          initialCountry,
+          initialNationalNumber ?? '',
+        );
+
+  BrakzonController._(
+    List<Country> list,
+    Country? initialCountry,
+    String initialText,
+  ) : this._parsed(
+          list,
+          initialCountry ??
+              list.firstWhere(
+                (c) => c.isoCode == 'US',
+                orElse: () => list.first,
+              ),
+          initialText,
+        );
+
+  BrakzonController._parsed(
+    List<Country> list,
+    Country fallback,
+    String initialText,
+  )   : countries = list,
+        _country = _split(list, fallback, initialText)?.country ?? fallback,
+        textController = TextEditingController(
+          text: _split(list, fallback, initialText)?.national ?? initialText,
+        ) {
     textController.addListener(notifyListeners);
+  }
+
+  static ({Country country, String national})? _split(
+    List<Country> list,
+    Country current,
+    String text,
+  ) {
+    return InternationalNumberInputFormatter(
+      countries: list,
+      currentCountry: () => current,
+      onCountryDetected: (_) {},
+      inner: const [],
+    ).parse(text);
   }
 
   Country get country => _country;
 
   String get nationalNumber => textController.text;
 
+  /// Setting an international number (`+93712345678` / `0093...`) also
+  /// switches the country and keeps only the national part in the field.
   set nationalNumber(String value) {
+    final split = _split(countries, _country, value);
+    var countryChanged = false;
+    if (split != null) {
+      countryChanged = split.country != _country;
+      _country = split.country;
+      value = split.national;
+    }
     textController.value = textController.value.copyWith(
       text: value,
       selection: TextSelection.collapsed(offset: value.length),
     );
-    // listener already calls notifyListeners
+    // The text listener notifies when the text changed; make sure a
+    // country-only change is announced too.
+    if (countryChanged) notifyListeners();
   }
 
   BrakzonNumber get value =>

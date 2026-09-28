@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:circle_flags/circle_flags.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../controller/brakzon_controller.dart';
@@ -12,6 +15,7 @@ import '../picker/country_picker_bottom_sheet.dart';
 import '../picker/country_picker_dialog.dart';
 import '../picker/country_picker_mode.dart';
 import '../utils/digit_formatters.dart';
+import '../utils/international_number_formatter.dart';
 import '../utils/numeral_systems.dart';
 
 /// Signature for fully replacing the tappable country-selector button
@@ -44,6 +48,10 @@ typedef CountrySelectorBuilder = Widget Function(
 ///    locale's native numeral glyphs (e.g. "۹۱۲ ۳۴۵ ۶۷۸۹" for Farsi), the
 ///    way a reader of that language expects. Set [useNativeDigits] to
 ///    `false` to always display plain ASCII regardless of locale.
+///  * International numbers typed or pasted with a leading `+` or `00`
+///    (e.g. "+93 70 123 4567") are split automatically: the dial code goes
+///    to the country selector (flag + dial code) and only the national
+///    number stays in the text field.
 ///  * Every user-facing string editable via [messages]
 ///    (`BrakzonMessages`) — nothing is hardcoded.
 ///  * Full external control via an optional [controller]
@@ -124,6 +132,9 @@ class PhoneFormField extends StatefulWidget {
   final InputDecoration? decoration;
   final TextStyle? style;
   final TextInputAction? textInputAction;
+
+  /// Replaces the built-in digit formatters (digit normalization, grouping,
+  /// native numerals). The `+` / `00` country detection always runs first.
   final List<TextInputFormatter>? inputFormatters;
   final FocusNode? focusNode;
   final CountrySelectorBuilder? countrySelectorBuilder;
@@ -204,6 +215,7 @@ class _PhoneFormFieldState extends State<PhoneFormField> {
     }
     _ownsFocusNode = widget.focusNode == null;
     _focusNode = widget.focusNode ?? FocusNode();
+    _focusNode.addListener(_handleFocusChanged);
     _controller.addListener(_handleControllerChanged);
   }
 
@@ -221,11 +233,67 @@ class _PhoneFormFieldState extends State<PhoneFormField> {
   }
 
   void _handleControllerChanged() {
+    if (!mounted) return;
+    // Rebuild so the flag + dial code follow the controller's country
+    // (picker choice, setCountry(), or a detected "+93..." prefix).
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      // Notified while the tree is building/laying out: defer.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() {});
+      });
+    } else {
+      setState(() {});
+    }
     widget.onChanged?.call(_controller.value);
+  }
+
+  /// When the field loses focus while it still holds an undecided
+  /// "+1" / "+18", decide now so the field never keeps a raw dial code.
+  void _handleFocusChanged() {
+    if (_focusNode.hasFocus) return;
+    final text = _controller.textController;
+    final committed = _buildInternationalFormatter().commit(text.value);
+    if (committed != text.value) text.value = committed;
+  }
+
+  void _handleCountryDetected(Country country) {
+    if (country == _controller.country) return;
+    // Defer so listeners aren't notified in the middle of a text edit.
+    scheduleMicrotask(() {
+      if (!mounted) return;
+      _controller.setCountry(country);
+      widget.onCountryChanged?.call(country);
+    });
+  }
+
+  List<TextInputFormatter> _buildDefaultFormatters() {
+    final nativeDigitSet = _resolveNativeDigitSet();
+    return <TextInputFormatter>[
+      const LocalizedDigitsInputFormatter(),
+      if (widget.groupDigits)
+        DigitGroupingInputFormatter(groupSize: widget.digitGroupSize)
+      else
+        FilteringTextInputFormatter.digitsOnly,
+      // Purely visual: re-renders the (still plain-ASCII-backed) digits
+      // using the locale's native numeral glyphs, e.g. Farsi ۰-۹.
+      if (nativeDigitSet != null)
+        NativeNumeralsDisplayFormatter(nativeDigitSet),
+    ];
+  }
+
+  InternationalNumberInputFormatter _buildInternationalFormatter() {
+    return InternationalNumberInputFormatter(
+      countries: _countries,
+      currentCountry: () => _controller.country,
+      onCountryDetected: _handleCountryDetected,
+      inner: widget.inputFormatters ?? _buildDefaultFormatters(),
+    );
   }
 
   @override
   void dispose() {
+    _focusNode.removeListener(_handleFocusChanged);
     _controller.removeListener(_handleControllerChanged);
     if (_ownsController) _controller.dispose();
     if (_ownsFocusNode) _focusNode.dispose();
@@ -273,7 +341,7 @@ class _PhoneFormFieldState extends State<PhoneFormField> {
         flagSize: widget.flagSize + 8,
       );
     }
-    if (picked != null) onPicked(picked);
+    if (picked != null && mounted) onPicked(picked);
   }
 
   String? _defaultValidator(BrakzonNumber? value) {
@@ -359,20 +427,6 @@ class _PhoneFormFieldState extends State<PhoneFormField> {
     // want this specific row mirrored.
     final fieldDirection = widget.forceTextDirection ?? TextDirection.ltr;
 
-    final nativeDigitSet = _resolveNativeDigitSet();
-
-    final defaultFormatters = <TextInputFormatter>[
-      const LocalizedDigitsInputFormatter(),
-      if (widget.groupDigits)
-        DigitGroupingInputFormatter(groupSize: widget.digitGroupSize)
-      else
-        FilteringTextInputFormatter.digitsOnly,
-      // Purely visual: re-renders the (still plain-ASCII-backed) digits
-      // using the locale's native numeral glyphs, e.g. Farsi ۰-۹.
-      if (nativeDigitSet != null)
-        NativeNumeralsDisplayFormatter(nativeDigitSet),
-    ];
-
     return Directionality(
       textDirection: fieldDirection,
       child: FormField<BrakzonNumber>(
@@ -398,7 +452,6 @@ class _PhoneFormFieldState extends State<PhoneFormField> {
               .copyWith(
             errorText: field.errorText,
             prefixIcon: _buildSelector(context),
-            // prefix: ,
           );
 
           return TextField(
@@ -410,7 +463,9 @@ class _PhoneFormFieldState extends State<PhoneFormField> {
             textInputAction: widget.textInputAction,
             textAlign: TextAlign.left,
             textDirection: TextDirection.ltr, // digits always render LTR
-            inputFormatters: widget.inputFormatters ?? defaultFormatters,
+            // Runs first: splits "+93..." / "0093..." into country + number,
+            // then hands the national number to the normal formatters.
+            inputFormatters: [_buildInternationalFormatter()],
             decoration: effectiveDecoration,
             onSubmitted: widget.onSubmitted,
             onChanged: (_) => field.didChange(_controller.value),

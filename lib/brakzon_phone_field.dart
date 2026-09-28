@@ -14,5 +14,6 @@ export 'src/picker/country_picker_bottom_sheet.dart' show showCountryPickerBotto
 export 'src/picker/country_picker_dialog.dart' show showCountryPickerDialog;
 export 'src/picker/country_picker_mode.dart';
 export 'src/utils/digit_formatters.dart';
+export 'src/utils/international_number_formatter.dart';
 export 'src/utils/numeral_systems.dart';
 export 'src/widgets/phone_form_field.dart';
