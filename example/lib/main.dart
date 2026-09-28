@@ -1,6 +1,6 @@
+import 'package:brakzon_phone_field/brakzon_phone_field.dart';
 import 'package:circle_flags/circle_flags.dart';
 import 'package:flutter/material.dart';
-import 'package:brakzon_phone_field/brakzon_phone_field.dart';
 
 void main() => runApp(const ExampleApp());
 
@@ -9,7 +9,7 @@ class ExampleApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final seed = const Color(0xFF6C5CE7);
+    const seed = Color(0xFF6C5CE7);
     return MaterialApp(
       title: 'Brakzon Phone Field',
       debugShowCheckedModeBanner: false,
@@ -62,12 +62,17 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
   @override
   void initState() {
     super.initState();
-    _controller = BrakzonController(initialNationalNumber: '');
-    _controller.addListener(() => setState(() {}));
+    _controller = BrakzonController(initialNationalNumber: '+1712 345 678 1');
+    _controller.addListener(_onControllerChanged);
+  }
+
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     super.dispose();
   }
@@ -164,7 +169,9 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
                           Text(
                             'The country picker always sits on the left and '
                             'the number always reads left-to-right — even '
-                            'in Farsi, Arabic, or Pashto.',
+                            'in Farsi, Arabic, or Pashto. Paste a number '
+                            'like +93 701234567 and the country is picked '
+                            'for you.',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: scheme.outline),
                           ),
@@ -252,7 +259,7 @@ class _Header extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: scheme.primary.withOpacity(0.35),
+            color: scheme.primary.withValues(alpha: 0.35),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -264,7 +271,7 @@ class _Header extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.18),
+              color: Colors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
@@ -274,10 +281,10 @@ class _Header extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   'brakzon_phone_field',
                   style: TextStyle(
@@ -313,7 +320,7 @@ class _Card extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -335,7 +342,7 @@ class _LivePreview extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: scheme.primaryContainer.withOpacity(0.4),
+        color: scheme.primaryContainer.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
